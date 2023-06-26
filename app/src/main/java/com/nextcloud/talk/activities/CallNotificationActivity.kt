@@ -221,12 +221,16 @@ class CallNotificationActivity : CallBaseActivity() {
                                 binding!!.incomingCallVoiceOrVideoTextView.text = String.format(
                                     resources.getString(R.string.nc_call_video),
                                     resources.getString(R.string.nc_app_product_name)
-                                )
+                                );
+                                originalBundle!!.putBoolean(KEY_CALL_VOICE_ONLY, false)
+                                proceedToCall()
                             } else {
                                 binding!!.incomingCallVoiceOrVideoTextView.text = String.format(
                                     resources.getString(R.string.nc_call_voice),
                                     resources.getString(R.string.nc_app_product_name)
                                 )
+                                originalBundle!!.putBoolean(KEY_CALL_VOICE_ONLY, true)
+                                proceedToCall()
                             }
                         }
                     }

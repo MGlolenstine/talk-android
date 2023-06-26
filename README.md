@@ -9,6 +9,8 @@
       alt="Get it on F-Droid"
       height="80">](https://f-droid.org/packages/com.nextcloud.talk2/)
 
+# Fork with automatic call accept
+
 Please note that Notifications won't work with the F-Droid version due to missing Google Play Services.
 
 |||||||
