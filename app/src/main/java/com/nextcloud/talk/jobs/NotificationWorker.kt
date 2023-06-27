@@ -203,6 +203,46 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
         fullScreenIntent.putExtras(bundle)
         fullScreenIntent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         context?.let { startActivity(it, fullScreenIntent, bundle) }
+
+        val requestCode = System.currentTimeMillis().toInt()
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context,
+            requestCode,
+            fullScreenIntent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
+
+        val soundUri = getCallRingtoneUri(applicationContext, appPreferences)
+        val notificationChannelId = NotificationUtils.NotificationChannels.NOTIFICATION_CHANNEL_CALLS_V4.name
+        val uri = Uri.parse(signatureVerification.user!!.baseUrl)
+        val baseUrl = uri.host
+
+        val notification =
+            NotificationCompat.Builder(applicationContext, notificationChannelId)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setSmallIcon(R.drawable.ic_call_black_24dp)
+                .setSubText(baseUrl)
+                .setShowWhen(true)
+                .setWhen(pushMessage.timestamp)
+                .setContentTitle(EmojiCompat.get().process(pushMessage.subject))
+                // auto cancel is set to false because notification (including sound) should continue while
+                // CallNotificationActivity is active
+                .setAutoCancel(false)
+                .setOngoing(true)
+                .setContentIntent(fullScreenPendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setSound(soundUri)
+                .build()
+        notification.flags = notification.flags or Notification.FLAG_INSISTENT
+
+        sendNotification(pushMessage.timestamp.toInt(), notification)
+
         checkIfCallIsActive(signatureVerification)
     }
 
@@ -280,7 +320,7 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
                     val ncNotification = notificationOverall.ocs!!.notification
                     if (ncNotification != null) {
                         enrichPushMessageByNcNotificationData(ncNotification)
-                        //showNotification(intent, ncNotification)
+                        showNotification(intent, ncNotification)
                     }
                 }
 
