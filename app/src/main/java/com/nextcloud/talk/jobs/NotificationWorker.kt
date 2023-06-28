@@ -162,6 +162,33 @@ class NotificationWorker(context: Context, workerParams: WorkerParameters) : Wor
         Log.d(TAG, "pushMessage.notificationIds: " + pushMessage.notificationIds)
         Log.d(TAG, "pushMessage.timestamp: " + pushMessage.timestamp)
 
+        if (pushMessage.type == "call" && pushMessage.id != null && pushMessage.subject.isNotEmpty()) {
+            context?.let {
+                val fullScreenIntent = Intent(context, CallNotificationActivity::class.java)
+                val bundle = Bundle()
+                bundle.putString(KEY_ROOM_TOKEN, pushMessage.id)
+                bundle.putInt(KEY_NOTIFICATION_TIMESTAMP, pushMessage.timestamp.toInt())
+                bundle.putParcelable(KEY_USER_ENTITY, signatureVerification.user)
+                bundle.putBoolean(KEY_FROM_NOTIFICATION_START_CALL, true)
+                fullScreenIntent.putExtras(bundle)
+                fullScreenIntent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+
+                val requestCode = System.currentTimeMillis().toInt()
+
+                val fullScreenPendingIntent = PendingIntent.getActivity(
+                    context,
+                    requestCode,
+                    fullScreenIntent,
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    } else {
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    }
+                )
+                fullScreenPendingIntent.send();
+            }
+        }
+
         if (pushMessage.delete) {
             cancelNotification(context, signatureVerification.user!!, pushMessage.notificationId)
         } else if (pushMessage.deleteAll) {
